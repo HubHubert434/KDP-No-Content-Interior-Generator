@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>KDP Interior Generator PRO</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<style>
+body{
+margin:0;
+font-family:Inter,system-ui,Arial;
+background:#f3f3f3;
+display:flex;
+align-items:center;
+justify-content:center;
+min-height:100vh;
+}
+.panel{
+background:white;
+width:520px;
+padding:40px;
+border-radius:18px;
+box-shadow:0 30px 80px rgba(0,0,0,0.12);
+}
+h1{margin-bottom:25px;font-size:24px;font-weight:800;}
+label{font-weight:600;display:block;margin-top:18px;}
+select,input{
+width:100%;
+padding:12px;
+border-radius:10px;
+border:1px solid #ddd;
+margin-top:6px;
+font-size:15px;
+}
+button{
+margin-top:20px;
+width:100%;
+padding:15px;
+border-radius:12px;
+border:none;
+font-weight:800;
+font-size:16px;
+cursor:pointer;
+}
+.generate{background:#ddd;}
+.generate:hover{background:#ccc;}
+.download{background:#ffd400;}
+.download:hover{background:#ffcc00;}
+canvas{
+margin-top:25px;
+width:100%;
+border:1px solid #ddd;
+border-radius:12px;
+background:#fff;
+}
+</style>
+</head>
+
+<body>
+<div class="panel">
+<h1>KDP Interior Generator</h1>
+
+<label>Trim Size (Amazon KDP)</label>
+<select id="size">
+<option value="5x8">5 × 8 in</option>
+<option value="5.25x8">5.25 × 8 in</option>
+<option value="5.5x8.5">5.5 × 8.5 in</option>
+<option value="6x9">6 × 9 in</option>
+<option value="5.06x7.81">5.06 × 7.81 in</option>
+<option value="6.14x9.21">6.14 × 9.21 in</option>
+<option value="6.69x9.61">6.69 × 9.61 in</option>
+<option value="7x10">7 × 10 in</option>
+<option value="7.44x9.69">7.44 × 9.69 in</option>
+<option value="7.5x9.25">7.5 × 9.25 in</option>
+<option value="8x10">8 × 10 in</option>
+<option value="8.5x11">8.5 × 11 in</option>
+<option value="8.27x11.69">8.27 × 11.69 (A4)</option>
+<option value="8.25x6">8.25 × 6 in</option>
+<option value="8.25x8.25">8.25 × 8.25 in</option>
+<option value="8.5x8.5">8.5 × 8.5 in</option>
+</select>
+
+<label>Pages (1–500)</label>
+<input type="number" id="pages" value="120" min="1" max="500">
+
+<label>Interior Style</label>
+<select id="style">
+<option value="lined">Lined</option>
+<option value="wide">Wide Ruled</option>
+<option value="college">College Ruled</option>
+<option value="dot">Dot Grid</option>
+<option value="grid5">Grid 5 mm</option>
+<option value="grid10">Grid 1 cm</option>
+<option value="music">Music (5 lines)</option>
+<option value="blank">Blank</option>
+</select>
+
+<button class="generate" onclick="generatePreview()">Generate Preview</button>
+<button class="download" onclick="downloadPDF()">Download PDF</button>
+
+<canvas id="preview" width="800" height="1100"></canvas>
+</div>
+
+<script>
+const sizes={
+"5x8":[127,203.2],
+"5.25x8":[133.35,203.2],
+"5.5x8.5":[139.7,215.9],
+"6x9":[152.4,228.6],
+"5.06x7.81":[128.524,198.374],
+"6.14x9.21":[155.956,233.934],
+"6.69x9.61":[169.926,244.094],
+"7x10":[177.8,254],
+"7.44x9.69":[189.096,246.126],
+"7.5x9.25":[190.5,234.95],
+"8x10":[203.2,254],
+"8.5x11":[215.9,279.4],
+"8.27x11.69":[210.058,296.926],
+"8.25x6":[209.55,152.4],
+"8.25x8.25":[209.55,209.55],
+"8.5x8.5":[215.9,215.9]
+};
+
+const marginPreview=50;
+const marginPDF=12;
+
+function generatePreview(){
+let style=document.getElementById("style").value;
+let c=document.getElementById("preview");
+let ctx=c.getContext("2d");
+drawPreview(ctx,c.width,c.height,style);
+}
+
+function drawPreview(ctx,w,h,style){
+ctx.clearRect(0,0,w,h);
+ctx.fillStyle="#fff";
+ctx.fillRect(0,0,w,h);
+ctx.strokeStyle="#000";
+ctx.fillStyle="#000";
+let m=marginPreview;
+
+if(style=="lined"||style=="wide"||style=="college"){
+let gap=style=="wide"?40:style=="college"?28:32;
+for(let y=m;y<h-m;y+=gap){
+ctx.beginPath();ctx.moveTo(m,y);ctx.lineTo(w-m,y);ctx.stroke();
+}
+}
+
+if(style=="dot"){
+for(let x=m;x<w-m;x+=40)
+for(let y=m;y<h-m;y+=40){
+ctx.beginPath();ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();
+}
+}
+
+if(style=="grid5"||style=="grid10"){
+let g=style=="grid10"?80:40;
+for(let x=0;x<=w;x+=g){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+for(let y=0;y<=h;y+=g){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+}
+
+if(style=="music"){
+let y=m;
+while(y<h-m){
+for(let i=0;i<5;i++){
+ctx.beginPath();ctx.moveTo(m,y+i*12);ctx.lineTo(w-m,y+i*12);ctx.stroke();
+}
+y+=100;
+}
+}
+}
+
+function downloadPDF(){
+const {jsPDF}=window.jspdf;
+let style=document.getElementById("style").value;
+let pages=parseInt(document.getElementById("pages").value);
+let s=document.getElementById("size").value;
+let w=sizes[s][0],h=sizes[s][1];
+let pdf=new jsPDF("p","mm",[w,h]);
+for(let i=0;i<pages;i++){
+drawPDF(pdf,style,w,h);
+if(i<pages-1) pdf.addPage();
+}
+pdf.save("KDP_Interior.pdf");
+}
+
+function drawPDF(pdf,style,w,h){
+let m=marginPDF;
+
+if(style=="lined"||style=="wide"||style=="college"){
+let gap=style=="wide"?10:style=="college"?7:8;
+for(let y=m;y<h-m;y+=gap) pdf.line(m,y,w-m,y);
+}
+
+if(style=="dot"){
+for(let x=m;x<w-m;x+=10)
+for(let y=m;y<h-m;y+=10)
+pdf.circle(x,y,0.5,"F");
+}
+
+if(style=="grid5"||style=="grid10"){
+let g=style=="grid10"?10:5;
+for(let x=0;x<=w;x+=g) pdf.line(x,0,x,h);
+for(let y=0;y<=h;y+=g) pdf.line(0,y,w,y);
+}
+
+if(style=="music"){
+let y=m;
+while(y<h-m){
+for(let i=0;i<5;i++){
+pdf.line(m,y+i*4,w-m,y+i*4);
+}
+y+=30;
+}
+}
+}
+</script>
+
+</body>
+</html>
